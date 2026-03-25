@@ -88,20 +88,33 @@ self-hosted setup where you can restrict to specific origins.
 
 ---
 
-### Cloudflare R2 — large vaults, no egress fees, experimental
+### Cloudflare R2 (and other object storage) — backup or large vaults only
 
 R2 is S3-compatible object storage. LiveSync uses its own journal replication protocol
-on top of it instead of CouchDB's native protocol.
+on top of it instead of CouchDB's native replication.
 
-**Hard limitation: LiveSync real-time mode is not available with R2.** You can only
-use periodic sync or sync-on-open. This is a protocol constraint, not a configuration
-option.
+According to the author (vrtmrz):
 
-**When to choose this:** Your vault is large (over 1 GB), you want zero egress cost,
-and you are comfortable with the experimental status and no real-time sync.
+> Object Storage synchronisation emulates [CouchDB replication] through journal
+> exchange. As a result of this approach, several features are unavailable. These
+> include **Fetch chunks on demand**, which retrieves chunks as needed, and
+> **LiveSync**, meaning real-time synchronisation.
+>
+> I had generally considered it to be stable enough for the occasional backup or
+> testing purposes, though a few issues have been reported.
 
-**When not to choose this:** You want changes to appear on your tablet within seconds
-of saving on desktop. Use CouchDB for that.
+In short: object storage is **not the primary use case**. It is suitable for occasional
+backup or as a fallback, not as a daily driver if you want reliable real-time sync.
+
+**Hard limitations (protocol constraints, not configuration options):**
+- No real-time LiveSync mode
+- No fetch-chunks-on-demand (full chunks must be transferred)
+
+**When to choose this:** Occasional backup, testing, or your vault is over 1 GB and
+you can tolerate periodic-only sync.
+
+**When not to choose this:** Daily active sync between desktop and tablet. Use CouchDB
+for that.
 
 ---
 
