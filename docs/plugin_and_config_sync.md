@@ -1,8 +1,128 @@
 # Plugin and Configuration Sync Guide
 
-This guide explains how **Customization Sync (Beta3)** works in Self-hosted LiveSync,
-why plugins do not auto-install, and the correct workflow to push plugins and settings
-from one device to another.
+This guide covers two things:
+
+1. How **Customization Sync (Beta3)** works and the correct workflow to push plugins
+   and settings between devices.
+2. Which remote backend to choose: **self-hosted VPS**, **IBM Cloudant**, or
+   **Cloudflare R2**.
+
+---
+
+## Choosing a remote backend
+
+LiveSync supports three remote types. The choice affects which sync modes are
+available, cost, and maintenance burden.
+
+### At a glance
+
+| | Self-hosted VPS (CouchDB) | IBM Cloudant | Cloudflare R2 |
+|---|---|---|---|
+| **Protocol** | CouchDB replication | CouchDB replication | Custom journal replication |
+| **LiveSync (real-time)** | ✅ Yes | ✅ Yes | ❌ No |
+| **Periodic / on-open sync** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Status in LiveSync** | Fully supported | Fully supported | Experimental |
+| **Free tier storage** | Depends on VPS | 1 GB | 10 GB |
+| **Egress fees** | None (self-hosted) | Metered | None |
+| **Maintenance** | You manage it | Managed | Managed |
+| **Setup difficulty** | Medium | Easy | Easy |
+
+### Self-hosted VPS (CouchDB) — recommended if you want full control
+
+Run CouchDB in Docker on any VPS. This is the fully supported path and the only
+option that gives you real-time sync with no third-party dependency.
+
+**Minimum viable setup:**
+
+```bash
+# On your VPS
+docker run -d --restart always \
+  --name couchdb-for-livesync \
+  -e COUCHDB_USER=youruser \
+  -e COUCHDB_PASSWORD=yourpassword \
+  -v /opt/couchdb-data:/opt/couchdb/data \
+  -v /opt/couchdb-etc:/opt/couchdb/etc/local.d \
+  -p 5984:5984 \
+  couchdb
+
+# Initialise CouchDB settings required by LiveSync
+curl -s https://raw.githubusercontent.com/vrtmrz/obsidian-livesync/main/utils/couchdb/couchdb-init.sh | \
+  hostname=http://localhost:5984 username=youruser password=yourpassword bash
+```
+
+You then need HTTPS. The easiest route is Caddy as a reverse proxy — it handles
+Let's Encrypt certificates automatically:
+
+```
+# /etc/caddy/Caddyfile
+couchdb.yourdomain.com {
+    reverse_proxy localhost:5984
+}
+```
+
+**When to choose this:** You already have a VPS, want real-time sync, care about
+privacy, and don't mind a one-time 30-minute setup.
+
+**Cheapest option:** A $4–6/month VPS (Oracle Free Tier is genuinely free). The
+CouchDB container uses ~200 MB RAM at idle.
+
+> See `docs/setup_own_server.md` for full instructions including Traefik and
+> Docker Compose examples.
+
+---
+
+### IBM Cloudant — easiest managed CouchDB
+
+IBM Cloudant is a hosted CouchDB service. The free Lite plan is enough for personal
+use (1 GB, ~20 reads/sec, ~10 writes/sec).
+
+**When to choose this:** You don't have a VPS and don't want one. The 1 GB limit
+is acceptable for your vault.
+
+**Limitation to know:** Cloudant requires CORS set to "All domains (`*`)" because it
+does not accept `app://obsidian.md` as an allowed origin. This is weaker than a
+self-hosted setup where you can restrict to specific origins.
+
+> See `docs/setup_cloudant.md` for step-by-step instructions.
+
+---
+
+### Cloudflare R2 — large vaults, no egress fees, experimental
+
+R2 is S3-compatible object storage. LiveSync uses its own journal replication protocol
+on top of it instead of CouchDB's native protocol.
+
+**Hard limitation: LiveSync real-time mode is not available with R2.** You can only
+use periodic sync or sync-on-open. This is a protocol constraint, not a configuration
+option.
+
+**When to choose this:** Your vault is large (over 1 GB), you want zero egress cost,
+and you are comfortable with the experimental status and no real-time sync.
+
+**When not to choose this:** You want changes to appear on your tablet within seconds
+of saving on desktop. Use CouchDB for that.
+
+---
+
+### Fly.io — easiest self-hosted CouchDB
+
+If a VPS feels like too much setup, Fly.io hosts a CouchDB container for you and
+generally falls within its free allowance for personal use. A fully automated setup
+notebook is available.
+
+> See `docs/setup_flyio.md`. The "Very automated setup" section runs everything
+> through a Google Colab notebook in about 5 minutes.
+
+---
+
+### Summary recommendation
+
+- **Want real-time sync + control + no ongoing cost:** Self-hosted VPS with CouchDB
+  (or Fly.io for easy hosting).
+- **Want managed, no server, vault under 1 GB:** IBM Cloudant.
+- **Vault over 1 GB, okay with periodic-only sync:** Cloudflare R2.
+
+---
 
 ---
 
