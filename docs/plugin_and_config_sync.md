@@ -283,8 +283,14 @@ From now on, that item syncs automatically every replication without opening the
 
 If nothing appears or statuses are wrong, check these first:
 
-- [ ] **Device name is set** on both devices (LiveSync Settings → General).
-  Without a device name `scanAllConfigFiles` silently aborts and nothing is uploaded.
+- [ ] **Device names are unique on every device** (LiveSync Settings → General).
+  Each device must have a different name. If two devices share the same name they
+  will overwrite each other's entries in the DB and produce confusing log messages
+  like `STORAGE -x> DB:ix:desktop/plugin_data/...: (config) already deleted (Not
+  found on database)`. That message means the scanning device found no DB entries
+  under its own name — almost always caused by a duplicate device name.
+- [ ] **Device name is set** on both devices. Without any name, `scanAllConfigFiles`
+  silently aborts and nothing is uploaded.
 - [ ] **Customization Sync is enabled** in LiveSync Settings
   (`usePluginSync: true`).
 - [ ] Desktop has run **Scan changes** at least once. Until it does, the remote DB has
