@@ -63,7 +63,8 @@ couchdb.yourdomain.com {
 **When to choose this:** You already have a VPS, want real-time sync, care about
 privacy, and don't mind a one-time 30-minute setup.
 
-**Cheapest option:** A $4–6/month VPS (Oracle Free Tier is genuinely free). The
+**Free option:** Oracle Cloud Free Tier includes 2 VMs that are always free (1 GB RAM
+each), enough to run CouchDB comfortably. Paid VPS starts around $4–6/month. The
 CouchDB container uses ~200 MB RAM at idle.
 
 > See `docs/setup_own_server.md` for full instructions including Traefik and
@@ -104,23 +105,28 @@ of saving on desktop. Use CouchDB for that.
 
 ---
 
-### Fly.io — easiest self-hosted CouchDB
+### Fly.io — paid, automated CouchDB hosting
 
-If a VPS feels like too much setup, Fly.io hosts a CouchDB container for you and
-generally falls within its free allowance for personal use. A fully automated setup
-notebook is available.
+> **Note:** Fly.io no longer offers a meaningful free tier. A credit card is required
+> and running a persistent CouchDB instance will incur charges. Check current pricing
+> before committing.
+
+Fly.io provides the most automated setup experience via a Google Colab notebook, which
+handles the entire CouchDB deployment in a few minutes. It is a reasonable choice if
+you want managed hosting and are willing to pay a small monthly fee.
 
 > See `docs/setup_flyio.md`. The "Very automated setup" section runs everything
-> through a Google Colab notebook in about 5 minutes.
+> through a Google Colab notebook.
 
 ---
 
 ### Summary recommendation
 
-- **Want real-time sync + control + no ongoing cost:** Self-hosted VPS with CouchDB
-  (or Fly.io for easy hosting).
-- **Want managed, no server, vault under 1 GB:** IBM Cloudant.
-- **Vault over 1 GB, okay with periodic-only sync:** Cloudflare R2.
+- **Want real-time sync, no cost:** Oracle Cloud Free Tier VPS with CouchDB.
+- **Want real-time sync, already paying for a VPS:** Add CouchDB to it.
+- **Want managed, no server, vault under 1 GB:** IBM Cloudant (free).
+- **Vault over 1 GB, okay with periodic-only sync:** Cloudflare R2 (free).
+- **Want managed hosting, willing to pay a small fee:** Fly.io.
 
 ---
 
